@@ -2,20 +2,10 @@ import { useEffect, useState } from "react";
 import { Brain, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 import api from "../lib/api";
 
-interface QuizQuestion {
-  question: string;
-  options: string[];
-  correct_index: number;
-  explanation: string;
-  topic: string | null;
-}
+interface QuizQuestion { question: string; options: string[]; correct_index: number; explanation: string; topic: string | null; }
+interface Quiz { id: string; title: string; questions: QuizQuestion[]; created_at: string; }
 
-interface Quiz {
-  id: string;
-  title: string;
-  questions: QuizQuestion[];
-  created_at: string;
-}
+const card: React.CSSProperties = { background: "#121212", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12 };
 
 export default function QuizPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -27,97 +17,66 @@ export default function QuizPage() {
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  useEffect(() => {
-    api
-      .get("/quizzes")
-      .then((res) => setQuizzes(res.data))
-      .catch(() => setQuizzes([]))
-      .finally(() => setLoading(false));
-  }, []);
+  useEffect(() => { api.get("/quizzes").then((r) => setQuizzes(r.data)).catch(() => setQuizzes([])).finally(() => setLoading(false)); }, []);
 
-  const startQuiz = (quiz: Quiz) => {
-    setActiveQuiz(quiz);
-    setCurrentQ(0);
-    setSelectedAnswer(null);
-    setConfirmed(false);
-    setScore(0);
-    setFinished(false);
-  };
+  const startQuiz = (q: Quiz) => { setActiveQuiz(q); setCurrentQ(0); setSelectedAnswer(null); setConfirmed(false); setScore(0); setFinished(false); };
 
   const confirm = () => {
     if (selectedAnswer === null || !activeQuiz) return;
     setConfirmed(true);
-    if (selectedAnswer === activeQuiz.questions[currentQ].correct_index) {
-      setScore((s) => s + 1);
-    }
+    if (selectedAnswer === activeQuiz.questions[currentQ].correct_index) setScore((s) => s + 1);
   };
 
   const next = () => {
     if (!activeQuiz) return;
-    if (currentQ < activeQuiz.questions.length - 1) {
-      setCurrentQ((q) => q + 1);
-      setSelectedAnswer(null);
-      setConfirmed(false);
-    } else {
+    if (currentQ < activeQuiz.questions.length - 1) { setCurrentQ((q) => q + 1); setSelectedAnswer(null); setConfirmed(false); }
+    else {
       setFinished(true);
-      // Submit attempt
-      api
-        .post(`/quizzes/${activeQuiz.id}/attempt`, {
-          answers: [],
-          score: score + (selectedAnswer === activeQuiz.questions[currentQ].correct_index ? 1 : 0),
-          total: activeQuiz.questions.length,
-        })
-        .catch(() => {});
+      api.post(`/quizzes/${activeQuiz.id}/attempt`, {
+        answers: [], score: score + (selectedAnswer === activeQuiz.questions[currentQ].correct_index ? 1 : 0), total: activeQuiz.questions.length,
+      }).catch(() => {});
     }
   };
 
-  // Quiz list view
+  const heading = (
+    <div style={{ marginBottom: 48 }}>
+      <p style={{ fontSize: 12, color: "#8a8280", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 600, marginBottom: 12 }}>Practice</p>
+      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 48, fontWeight: 700, color: "#e5e2e1" }}>
+        Practice <span style={{ fontStyle: "italic", color: "#c9a96e" }}>Quiz</span>
+      </h2>
+    </div>
+  );
+
+  const goldBtn: React.CSSProperties = {
+    background: "#c9a96e", color: "#131313", fontWeight: 600, fontSize: 13,
+    padding: "12px 24px", borderRadius: 8, border: "none", cursor: "pointer",
+    fontFamily: "'Geist', sans-serif", letterSpacing: "0.03em",
+  };
+
+  // List view
   if (!activeQuiz) {
-    if (loading) {
-      return (
-        <div>
-          <h2 className="text-3xl font-bold mb-6">Practice Quiz</h2>
-          <p className="text-text-muted">Loading...</p>
+    if (loading) return <div>{heading}<p style={{ color: "#5c4037" }}>Loading...</p></div>;
+    if (quizzes.length === 0) return (
+      <div>{heading}
+        <div style={{ ...card, padding: "80px 0", textAlign: "center" }}>
+          <Brain size={40} color="#353534" strokeWidth={1} style={{ margin: "0 auto 16px" }} />
+          <p style={{ color: "#8a8280", fontSize: 15 }}>No quizzes yet</p>
+          <p style={{ color: "#5c4037", fontSize: 13, marginTop: 6 }}>Generate them from the Dashboard</p>
         </div>
-      );
-    }
-
-    if (quizzes.length === 0) {
-      return (
-        <div>
-          <h2 className="text-3xl font-bold mb-6">Practice Quiz</h2>
-          <div className="bg-surface-light rounded-xl border border-surface-lighter p-12 text-center">
-            <Brain size={48} className="mx-auto mb-3 text-text-muted opacity-50" />
-            <p className="text-text-muted">No quizzes yet.</p>
-            <p className="text-sm text-text-muted mt-2">
-              Go to the Dashboard and click "Generate Quiz" on a document.
-            </p>
-          </div>
-        </div>
-      );
-    }
-
+      </div>
+    );
     return (
-      <div>
-        <h2 className="text-3xl font-bold mb-6">Practice Quiz</h2>
-        <div className="space-y-3">
-          {quizzes.map((quiz) => (
-            <div
-              key={quiz.id}
-              className="bg-surface-light rounded-xl border border-surface-lighter p-5 flex items-center justify-between"
-            >
+      <div>{heading}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {quizzes.map((q) => (
+            <div key={q.id} style={{ ...card, padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"}>
               <div>
-                <p className="font-medium">{quiz.title}</p>
-                <p className="text-sm text-text-muted">
-                  {quiz.questions.length} questions
-                </p>
+                <p style={{ fontSize: 15, color: "#e5e2e1" }}>{q.title}</p>
+                <p style={{ fontSize: 13, color: "#5c4037", marginTop: 4 }}>{q.questions.length} questions</p>
               </div>
-              <button
-                onClick={() => startQuiz(quiz)}
-                className="bg-primary hover:bg-primary-hover text-white text-sm px-4 py-2 rounded-lg transition-colors"
-              >
-                Start Quiz
-              </button>
+              <button onClick={() => startQuiz(q)} style={{ ...goldBtn, padding: "8px 20px" }}>Start</button>
             </div>
           ))}
         </div>
@@ -125,102 +84,66 @@ export default function QuizPage() {
     );
   }
 
-  // Finished view
+  // Finished
   if (finished) {
     const total = activeQuiz.questions.length;
     const pct = Math.round((score / total) * 100);
     return (
-      <div className="max-w-xl mx-auto text-center">
-        <h2 className="text-3xl font-bold mb-4">Quiz Complete!</h2>
-        <div className="bg-surface-light rounded-xl border border-surface-lighter p-8">
-          <p className="text-5xl font-bold mb-2">{pct}%</p>
-          <p className="text-text-muted mb-6">
-            {score} out of {total} correct
-          </p>
-          <div className="flex justify-center gap-3">
-            <button
-              onClick={() => startQuiz(activeQuiz)}
-              className="bg-primary hover:bg-primary-hover text-white text-sm px-4 py-2 rounded-lg transition-colors"
-            >
-              Retry
-            </button>
-            <button
-              onClick={() => setActiveQuiz(null)}
-              className="bg-surface-lighter hover:bg-surface text-text-muted text-sm px-4 py-2 rounded-lg transition-colors"
-            >
-              Back to Quizzes
-            </button>
-          </div>
+      <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center", paddingTop: 48 }}>
+        <p style={{ fontSize: 12, color: "#8a8280", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 600, marginBottom: 20 }}>Complete</p>
+        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 72, fontWeight: 400, color: "#c9a96e" }}>{pct}%</p>
+        <p style={{ color: "#5c4037", fontSize: 15, marginTop: 8 }}>{score} out of {total} correct</p>
+        <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 36 }}>
+          <button onClick={() => startQuiz(activeQuiz)} style={goldBtn}>Retry</button>
+          <button onClick={() => setActiveQuiz(null)} style={{ ...goldBtn, background: "#1c1b1b", color: "#8a8280" }}>Back</button>
         </div>
       </div>
     );
   }
 
-  // Active quiz view
+  // Active quiz
   const question = activeQuiz.questions[currentQ];
+  const progress = ((currentQ + 1) / activeQuiz.questions.length) * 100;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold">{activeQuiz.title}</h2>
-        <span className="text-sm text-text-muted">
-          {currentQ + 1} / {activeQuiz.questions.length}
-        </span>
+    <div style={{ maxWidth: 720, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: "#8a8280" }}>{activeQuiz.title}</h3>
+        <span style={{ fontSize: 12, color: "#5c4037" }}>{currentQ + 1} / {activeQuiz.questions.length}</span>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full bg-surface-lighter rounded-full h-1.5 mb-6">
-        <div
-          className="bg-primary rounded-full h-1.5 transition-all"
-          style={{
-            width: `${((currentQ + 1) / activeQuiz.questions.length) * 100}%`,
-          }}
-        />
+      <div style={{ width: "100%", height: 2, background: "#201f1f", borderRadius: 1, marginBottom: 36 }}>
+        <div style={{ width: `${progress}%`, height: 2, background: "#c9a96e", borderRadius: 1, transition: "width 0.5s" }} />
       </div>
 
       {/* Question */}
-      <div className="bg-surface-light rounded-xl border border-surface-lighter p-6 mb-4">
-        {question.topic && (
-          <p className="text-xs text-accent mb-2">{question.topic}</p>
-        )}
-        <p className="text-lg font-medium">{question.question}</p>
+      <div style={{ marginBottom: 24 }}>
+        {question.topic && <p style={{ fontSize: 11, color: "#a68b55", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>{question.topic}</p>}
+        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#e5e2e1", lineHeight: 1.5 }}>{question.question}</p>
       </div>
 
       {/* Options */}
-      <div className="space-y-2 mb-4">
-        {question.options.map((option, i) => {
-          let style =
-            "bg-surface-light border border-surface-lighter hover:border-primary/50";
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
+        {question.options.map((opt, i) => {
+          let bg = "#121212", border = "rgba(255,255,255,0.05)";
           if (confirmed) {
-            if (i === question.correct_index)
-              style = "bg-success/10 border border-success";
-            else if (i === selectedAnswer)
-              style = "bg-danger/10 border border-danger";
-            else style = "bg-surface-light border border-surface-lighter opacity-50";
-          } else if (i === selectedAnswer) {
-            style = "bg-primary/10 border border-primary";
-          }
+            if (i === question.correct_index) { bg = "rgba(127,186,106,0.08)"; border = "rgba(127,186,106,0.25)"; }
+            else if (i === selectedAnswer) { bg = "rgba(255,180,171,0.08)"; border = "rgba(255,180,171,0.25)"; }
+            else { bg = "#121212"; border = "rgba(255,255,255,0.03)"; }
+          } else if (i === selectedAnswer) { bg = "rgba(201,169,110,0.08)"; border = "rgba(201,169,110,0.25)"; }
 
           return (
-            <button
-              key={i}
-              onClick={() => !confirmed && setSelectedAnswer(i)}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${style}`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-text-muted font-mono">
-                  {String.fromCharCode(65 + i)}
-                </span>
-                <span>{option}</span>
-                {confirmed && i === question.correct_index && (
-                  <CheckCircle size={16} className="ml-auto text-success" />
-                )}
-                {confirmed &&
-                  i === selectedAnswer &&
-                  i !== question.correct_index && (
-                    <XCircle size={16} className="ml-auto text-danger" />
-                  )}
-              </div>
+            <button key={i} onClick={() => !confirmed && setSelectedAnswer(i)} style={{
+              width: "100%", textAlign: "left", padding: "14px 20px", borderRadius: 10,
+              background: bg, border: `1px solid ${border}`, cursor: confirmed ? "default" : "pointer",
+              display: "flex", alignItems: "center", gap: 14, transition: "all 0.2s",
+              opacity: confirmed && i !== question.correct_index && i !== selectedAnswer ? 0.4 : 1,
+            }}>
+              <span style={{ fontSize: 12, color: "#5c4037", fontFamily: "monospace" }}>{String.fromCharCode(65 + i)}</span>
+              <span style={{ fontSize: 15, color: "#e5e2e1", flex: 1 }}>{opt}</span>
+              {confirmed && i === question.correct_index && <CheckCircle size={16} color="#7fba6a" strokeWidth={1.5} />}
+              {confirmed && i === selectedAnswer && i !== question.correct_index && <XCircle size={16} color="#ffb4ab" strokeWidth={1.5} />}
             </button>
           );
         })}
@@ -228,30 +151,20 @@ export default function QuizPage() {
 
       {/* Explanation */}
       {confirmed && question.explanation && (
-        <div className="bg-surface-light rounded-lg p-4 mb-4 text-sm text-text-muted border border-surface-lighter">
-          <span className="font-medium text-text">Explanation:</span>{" "}
-          {question.explanation}
+        <div style={{ ...card, padding: "16px 20px", marginBottom: 24, fontSize: 14, color: "#8a8280" }}>
+          <span style={{ color: "#e5e2e1" }}>Explanation: </span>{question.explanation}
         </div>
       )}
 
-      {/* Action button */}
+      {/* Action */}
       {!confirmed ? (
-        <button
-          onClick={confirm}
-          disabled={selectedAnswer === null}
-          className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-medium py-3 rounded-lg transition-colors"
-        >
+        <button onClick={confirm} disabled={selectedAnswer === null} style={{ ...goldBtn, width: "100%", padding: "14px 0", opacity: selectedAnswer === null ? 0.3 : 1 }}>
           Check Answer
         </button>
       ) : (
-        <button
-          onClick={next}
-          className="w-full bg-primary hover:bg-primary-hover text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          {currentQ < activeQuiz.questions.length - 1
-            ? "Next Question"
-            : "See Results"}
-          <ArrowRight size={16} />
+        <button onClick={next} style={{ ...goldBtn, width: "100%", padding: "14px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          {currentQ < activeQuiz.questions.length - 1 ? "Next Question" : "See Results"}
+          <ArrowRight size={15} strokeWidth={1.5} />
         </button>
       )}
     </div>

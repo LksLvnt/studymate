@@ -12,124 +12,91 @@ export default function UploadPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
+    e.preventDefault(); setDragActive(false);
     const dropped = e.dataTransfer.files[0];
-    if (dropped?.type === "application/pdf") {
-      setFile(dropped);
-      setStatus("idle");
-    }
+    if (dropped?.type === "application/pdf") { setFile(dropped); setStatus("idle"); }
   }, []);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) {
-      setFile(selected);
-      setStatus("idle");
-    }
-  };
 
   const handleUpload = async () => {
     if (!file) return;
-
-    setStatus("uploading");
-    setErrorMsg("");
-
+    setStatus("uploading"); setErrorMsg("");
     const formData = new FormData();
     formData.append("file", file);
     if (subject.trim()) formData.append("subject", subject.trim());
-
     try {
-      await api.post("/documents/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setStatus("success");
-      setFile(null);
-      setSubject("");
-    } catch (err: any) {
-      setStatus("error");
-      setErrorMsg(err.response?.data?.detail ?? "Upload failed. Is the backend running?");
-    }
+      await api.post("/documents/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      setStatus("success"); setFile(null); setSubject("");
+    } catch { setStatus("error"); setErrorMsg("Upload failed."); }
+  };
+
+  const input: React.CSSProperties = {
+    width: "100%", background: "#1c1b1b", border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: 8, padding: "12px 16px", color: "#e5e2e1", fontSize: 14,
+    fontFamily: "'Geist', sans-serif", outline: "none",
   };
 
   return (
-    <div className="max-w-2xl">
-      <h2 className="text-3xl font-bold mb-6">Upload Materials</h2>
+    <div style={{ maxWidth: 560 }}>
+      <div style={{ marginBottom: 48 }}>
+        <p style={{ fontSize: 12, color: "#8a8280", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 600, marginBottom: 12 }}>Materials</p>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 48, fontWeight: 700, color: "#e5e2e1" }}>
+          Upload <span style={{ fontStyle: "italic", color: "#c9a96e" }}>Materials</span>
+        </h2>
+      </div>
 
-      {/* Drop zone */}
       <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragActive(true);
-        }}
+        onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
         onDragLeave={() => setDragActive(false)}
         onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer ${
-          dragActive
-            ? "border-accent bg-accent/10"
-            : "border-surface-lighter hover:border-primary"
-        }`}
         onClick={() => document.getElementById("file-input")?.click()}
-      >
-        <input
-          id="file-input"
-          type="file"
-          accept=".pdf"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-
+        style={{
+          border: `1px dashed ${dragActive ? "#c9a96e" : "rgba(255,255,255,0.1)"}`,
+          borderRadius: 12, padding: "64px 20px", textAlign: "center", cursor: "pointer",
+          background: dragActive ? "rgba(201,169,110,0.05)" : "transparent",
+          transition: "all 0.2s",
+        }}>
+        <input id="file-input" type="file" accept=".pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFile(f); setStatus("idle"); }}} style={{ display: "none" }} />
         {file ? (
-          <div className="flex flex-col items-center gap-2">
-            <FileUp size={40} className="text-primary" />
-            <p className="font-medium">{file.name}</p>
-            <p className="text-sm text-text-muted">
-              {(file.size / 1024 / 1024).toFixed(1)} MB
-            </p>
-          </div>
+          <>
+            <FileUp size={32} color="#c9a96e" strokeWidth={1.5} style={{ margin: "0 auto 12px" }} />
+            <p style={{ fontSize: 15, color: "#e5e2e1" }}>{file.name}</p>
+            <p style={{ fontSize: 13, color: "#5c4037", marginTop: 4 }}>{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+          </>
         ) : (
-          <div className="flex flex-col items-center gap-2">
-            <UploadIcon size={40} className="text-text-muted" />
-            <p className="font-medium">Drop your PDF here</p>
-            <p className="text-sm text-text-muted">or click to browse</p>
-          </div>
+          <>
+            <UploadIcon size={32} color="#5c4037" strokeWidth={1} style={{ margin: "0 auto 12px" }} />
+            <p style={{ fontSize: 15, color: "#8a8280" }}>Drop your PDF here</p>
+            <p style={{ fontSize: 13, color: "#5c4037", marginTop: 4 }}>or click to browse</p>
+          </>
         )}
       </div>
 
-      {/* Subject input */}
-      <div className="mt-6">
-        <label className="block text-sm font-medium text-text-muted mb-1.5">
+      <div style={{ marginTop: 24 }}>
+        <label style={{ display: "block", fontSize: 12, color: "#8a8280", letterSpacing: "0.1em", textTransform: "uppercase" as const, fontWeight: 600, marginBottom: 8 }}>
           Subject (optional)
         </label>
-        <input
-          type="text"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="e.g. Operating Systems, Linear Algebra..."
-          className="w-full bg-surface-light border border-surface-lighter rounded-lg px-4 py-2.5 text-text placeholder-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary"
-        />
+        <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Operating Systems..." style={input}
+          onFocus={(e) => e.currentTarget.style.borderColor = "#c9a96e"}
+          onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"} />
       </div>
 
-      {/* Upload button */}
-      <button
-        onClick={handleUpload}
-        disabled={!file || status === "uploading"}
-        className="mt-6 w-full bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-colors"
-      >
-        {status === "uploading" ? "Processing..." : "Upload & Generate Study Materials"}
+      <button onClick={handleUpload} disabled={!file || status === "uploading"} style={{
+        marginTop: 24, width: "100%", background: "#c9a96e", color: "#131313", fontWeight: 600,
+        fontSize: 14, padding: "14px 0", borderRadius: 8, border: "none", cursor: "pointer",
+        opacity: !file || status === "uploading" ? 0.4 : 1,
+        fontFamily: "'Geist', sans-serif",
+      }}>
+        {status === "uploading" ? "Processing..." : "Upload & Process"}
       </button>
 
-      {/* Status messages */}
       {status === "success" && (
-        <div className="mt-4 flex items-center gap-2 text-success">
-          <CheckCircle size={18} />
-          <span>Upload successful! Your study materials are being generated.</span>
+        <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 8, color: "#7fba6a", fontSize: 14 }}>
+          <CheckCircle size={16} strokeWidth={1.5} /> Upload successful
         </div>
       )}
       {status === "error" && (
-        <div className="mt-4 flex items-center gap-2 text-danger">
-          <AlertCircle size={18} />
-          <span>{errorMsg}</span>
+        <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 8, color: "#ffb4ab", fontSize: 14 }}>
+          <AlertCircle size={16} strokeWidth={1.5} /> {errorMsg}
         </div>
       )}
     </div>
