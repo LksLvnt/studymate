@@ -12,7 +12,11 @@ app = FastAPI(
 # CORS — allow frontend dev server
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+    "http://localhost:5173",
+    "https://studymate.lokoslevente.com",
+    "https://studymate-pozd.onrender.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
