@@ -25,14 +25,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    async function initAuth() {
+      const hasAuthParams =
+        window.location.search.includes("access_token") ||
+        window.location.search.includes("refresh_token") ||
+        window.location.hash.includes("access_token") ||
+        window.location.hash.includes("refresh_token") ||
+        window.location.search.includes("type=success");
+
+      if (hasAuthParams && "getSessionFromUrl" in supabase.auth) {
+        try {
+          await (supabase.auth as any).getSessionFromUrl();
+        } catch {
+          // ignore if no callback params or parsing fails
+        }
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-    });
 
-    // Listen for auth changes
+      if (hasAuthParams && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    initAuth();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {

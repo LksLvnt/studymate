@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
+import StudyGuidesPage from "./pages/StudyGuides";
 import UploadPage from "./pages/Upload";
 import Flashcards from "./pages/Flashcards";
 import QuizPage from "./pages/Quiz";
@@ -27,6 +28,7 @@ function ProtectedRoutes() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Dashboard />} />
+        <Route path="guides" element={<StudyGuidesPage />} />
         <Route path="upload" element={<UploadPage />} />
         <Route path="flashcards" element={<Flashcards />} />
         <Route path="quiz" element={<QuizPage />} />
