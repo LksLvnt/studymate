@@ -33,9 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.location.hash.includes("refresh_token") ||
         window.location.search.includes("type=success");
 
-      if (hasAuthParams && "getSessionFromUrl" in supabase.auth) {
+      if (hasAuthParams && "detectSessionInUrl" in supabase.auth) {
         try {
-          await (supabase.auth as any).getSessionFromUrl();
+          await (supabase.auth as any).detectSessionInUrl();
         } catch {
           // ignore if no callback params or parsing fails
         }

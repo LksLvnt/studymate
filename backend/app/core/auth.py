@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import httpx
+from jose import JWTError, jwt
 from app.core.config import get_settings
 
 security = HTTPBearer()
@@ -18,6 +19,21 @@ async def get_current_user(
 
     if not settings.supabase_url:
         return {"sub": "dev-user", "email": "dev@localhost"}
+
+    if settings.supabase_jwt_secret:
+        try:
+            decoded = jwt.decode(
+                credentials.credentials,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                options={"verify_aud": False},
+            )
+            return {
+                "sub": decoded.get("sub", ""),
+                "email": decoded.get("email", ""),
+            }
+        except JWTError:
+            pass
 
     async with httpx.AsyncClient() as client:
         response = await client.get(

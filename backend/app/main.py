@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import documents, generation, flashcards, quizzes
+from app.routers import analytics, documents, generation, flashcards, quizzes, study_guides
 
 app = FastAPI(
     title="StudyMate API",
@@ -27,6 +27,8 @@ app.include_router(documents.router, prefix="/api")
 app.include_router(generation.router, prefix="/api")
 app.include_router(flashcards.router, prefix="/api")
 app.include_router(quizzes.router, prefix="/api")
+app.include_router(study_guides.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
 
 
 @app.get("/api/health")
