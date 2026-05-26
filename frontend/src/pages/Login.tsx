@@ -103,7 +103,9 @@ export default function Login() {
             onClick={async () => {
               await supabase.auth.signInWithOAuth({
                 provider: "google",
-                options: { redirectTo: window.location.origin },
+                options: {
+                  redirectTo: window.location.href.replace(window.location.hash, ""),
+                },
               });
             }}
             style={{

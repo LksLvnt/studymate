@@ -26,14 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function initAuth() {
-      const hasAuthParams =
-        window.location.search.includes("access_token") ||
-        window.location.search.includes("refresh_token") ||
-        window.location.hash.includes("access_token") ||
-        window.location.hash.includes("refresh_token") ||
-        window.location.search.includes("type=success");
-
-      if (hasAuthParams && "detectSessionInUrl" in supabase.auth) {
+      if (typeof (supabase.auth as any).detectSessionInUrl === "function") {
         try {
           await (supabase.auth as any).detectSessionInUrl();
         } catch {
@@ -46,8 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       setLoading(false);
 
-      if (hasAuthParams && window.history.replaceState) {
-        window.history.replaceState({}, document.title, window.location.pathname);
+      if (window.history.replaceState) {
+        const cleanUrl = window.location.pathname + window.location.search;
+        window.history.replaceState({}, document.title, cleanUrl);
       }
     }
 
