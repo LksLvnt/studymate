@@ -70,6 +70,7 @@ async def list_documents(
 @router.post("/upload")
 @limiter.limit("10/minute")
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
     subject: str = Form(None),
     user: dict = Depends(get_current_user),

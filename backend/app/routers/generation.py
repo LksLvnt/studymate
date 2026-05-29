@@ -34,6 +34,7 @@ async def _get_document_chunks(doc_id: str, user_id: str, db: AsyncSession) -> t
 @router.post("/study-guide/{document_id}")
 @limiter.limit("5/minute")
 async def create_study_guide(
+    request: Request,
     document_id: str,
     user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -61,6 +62,7 @@ async def create_study_guide(
 @router.post("/flashcards/{document_id}")
 @limiter.limit("5/minute")
 async def create_flashcards(
+    request: Request,
     document_id: str,
     count: int = 20,
     user: dict = Depends(get_current_user),
@@ -99,6 +101,7 @@ async def create_flashcards(
 @router.post("/quiz/{document_id}")
 @limiter.limit("5/minute")
 async def create_quiz(
+    request: Request,
     document_id: str,
     count: int = 10,
     user: dict = Depends(get_current_user),
