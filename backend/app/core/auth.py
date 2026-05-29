@@ -13,10 +13,6 @@ async def get_current_user(
     """Verify the Supabase JWT by calling Supabase's auth API."""
     settings = get_settings()
 
-    print(f"[AUTH DEBUG] Supabase URL: {settings.supabase_url}")
-    print(f"[AUTH DEBUG] Anon key starts with: {settings.supabase_anon_key[:20]}...")
-    print(f"[AUTH DEBUG] Token starts with: {credentials.credentials[:20]}...")
-
     if not settings.supabase_url:
         return {"sub": "dev-user", "email": "dev@localhost"}
 
@@ -43,9 +39,6 @@ async def get_current_user(
                 "apikey": settings.supabase_anon_key,
             },
         )
-
-    print(f"[AUTH DEBUG] Supabase response status: {response.status_code}")
-    print(f"[AUTH DEBUG] Supabase response body: {response.text[:200]}")
 
     if response.status_code != 200:
         raise HTTPException(

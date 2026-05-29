@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+import os
 from app.routers import analytics, documents, generation, flashcards, quizzes, study_guides
 
 app = FastAPI(
@@ -9,14 +9,14 @@ app = FastAPI(
     version="0.1.0",
 )
 
+origins = ["https://studymate.lokoslevente.com"]
+if os.getenv("ENV") != "production":
+    origins.append("http://localhost:5173")
+
 # CORS — allow frontend dev server
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-    "http://localhost:5173",
-    "https://studymate.lokoslevente.com",
-    "https://studymate-pozd.onrender.com",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
