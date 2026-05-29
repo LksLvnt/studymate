@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { BookOpen, ArrowLeft, FileText } from "lucide-react";
 import api from "../lib/api";
+import DOMPurify from "dompurify";
 
 interface StudyGuideListItem { id: string; title: string; document_filename: string; subject: string | null; created_at: string; }
 interface StudyGuideFull extends StudyGuideListItem { content_markdown: string; }
@@ -22,8 +23,9 @@ function MarkdownRenderer({ content }: { content: string }) {
       .replace(/^(?!<[a-z])((?!^\s*$).+)$/gm, '<p style="color:#8a8280;line-height:1.75;margin-bottom:14px;font-size:15px">$1</p>');
     return html;
   };
-  return <div dangerouslySetInnerHTML={{ __html: render(content) }} />;
+  return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(render(content)) }} />;
 }
+
 
 export default function StudyGuidesPage() {
   const [guides, setGuides] = useState<StudyGuideListItem[]>([]);

@@ -1,13 +1,33 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import os
+import logging
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.core.rate_limit import limiter
 from app.routers import analytics, documents, generation, flashcards, quizzes, study_guides
+
+logger = logging.getLogger(__name__)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, HTTPException):
+        raise exc
+    logger.error(f"Unhandled error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal error occurred. Please try again."},
+    )
 
 app = FastAPI(
     title="StudyMate API",
     description="AI Study Companion — backend API",
     version="0.1.0",
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 origins = ["https://studymate.lokoslevente.com"]
 if os.getenv("ENV") != "production":

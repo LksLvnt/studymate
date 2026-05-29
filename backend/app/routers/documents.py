@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import fitz  # PyMuPDF
@@ -7,6 +7,7 @@ import tiktoken
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.models.models import Document, DocumentChunk
+from app.core.rate_limit import limiter
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -67,6 +68,7 @@ async def list_documents(
 
 
 @router.post("/upload")
+@limiter.limit("10/minute")
 async def upload_document(
     file: UploadFile = File(...),
     subject: str = Form(None),
