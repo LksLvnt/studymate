@@ -10,6 +10,12 @@ from app.routers import analytics, documents, generation, flashcards, quizzes, s
 
 logger = logging.getLogger(__name__)
 
+app = FastAPI(
+    title="StudyMate API",
+    description="AI Study Companion — backend API",
+    version="0.1.0",
+)
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, HTTPException):
@@ -20,11 +26,6 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "An internal error occurred. Please try again."},
     )
 
-app = FastAPI(
-    title="StudyMate API",
-    description="AI Study Companion — backend API",
-    version="0.1.0",
-)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
