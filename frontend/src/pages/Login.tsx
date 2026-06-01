@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 
@@ -10,6 +10,12 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [lastMethod, setLastMethod] = useState<string | null>(null);
+
+useEffect(() => {
+  setLastMethod(localStorage.getItem("studymate_last_login"));
+}, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -17,6 +23,7 @@ export default function Login() {
     try {
       if (isSignUp) await signUp(email, password);
       else await signIn(email, password);
+      localStorage.setItem("studymate_last_login", "email");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Authentication failed");
     } finally {
@@ -82,6 +89,9 @@ export default function Login() {
             opacity: loading ? 0.5 : 1, transition: "opacity 0.2s",
           }}>
             {loading ? "Please wait..." : isSignUp ? "CREATE ACCOUNT" : "SIGN IN"}
+            {!isSignUp && lastMethod === "email" && !loading && (
+              <span style={{ fontSize: 10, opacity: 0.5, marginLeft: 6 }}>• last used</span>
+            )}
           </button>
 
           <p style={{ fontSize: 14, textAlign: "center", color: "#8a8280", marginTop: 24 }}>
@@ -101,6 +111,7 @@ export default function Login() {
           <button
             type="button"
             onClick={async () => {
+              localStorage.setItem("studymate_last_login", "google");
               await supabase.auth.signInWithOAuth({
                 provider: "google",
                 options: {
@@ -124,6 +135,9 @@ export default function Login() {
               <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
             </svg>
             Continue with Google
+            {lastMethod === "google" && (
+              <span style={{ fontSize: 10, color: "#5c4037", marginLeft: 4 }}>• last used</span>
+            )}
           </button>
         </form>
 
