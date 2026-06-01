@@ -70,7 +70,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20, marginBottom: 64 }}>
+      <div style={{ display: "grid", gridTemplateColumns: window.innerWidth < 768 ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: window.innerWidth < 768 ? 12 : 20, marginBottom: window.innerWidth < 768 ? 32 : 64 }}>
         {stats.map((s) => (
           <div key={s.label} style={{ ...card, padding: 28 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>

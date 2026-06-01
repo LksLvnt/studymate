@@ -79,7 +79,7 @@ export default function Analytics() {
       {heading}
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: window.innerWidth < 768 ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: window.innerWidth < 768 ? 12 : 20, marginBottom: window.innerWidth < 768 ? 32 : 64 }}>
         {stats.map((s) => (
           <div key={s.label} style={{ ...card, padding: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
@@ -93,7 +93,7 @@ export default function Analytics() {
       </div>
 
       {/* Charts row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: window.innerWidth < 768 ? "1fr" : "1fr 1fr", gap: window.innerWidth < 768 ? 12 : 16, marginBottom: window.innerWidth < 768 ? 16 : 24 }}>
         {/* Quiz accuracy */}
         <div style={{ ...card, padding: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
@@ -138,7 +138,7 @@ export default function Analytics() {
       </div>
 
       {/* Bottom row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: window.innerWidth < 768 ? "1fr" : "1fr 1fr", gap: window.innerWidth < 768 ? 12 : 16 }}>
         <div style={{ ...card, padding: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
             <Flame size={14} color="#c9a96e" strokeWidth={1.5} />
