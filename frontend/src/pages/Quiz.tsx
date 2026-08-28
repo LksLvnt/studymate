@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Brain, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 import api from "../lib/api";
+import { useDataCache } from "../context/DataCacheContext";
 
 interface QuizQuestion { question: string; options: string[]; correct_index: number; explanation: string; topic: string | null; }
 interface Quiz { id: string; title: string; questions: QuizQuestion[]; created_at: string; }
@@ -17,7 +18,14 @@ export default function QuizPage() {
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  useEffect(() => { api.get("/quizzes").then((r) => setQuizzes(r.data)).catch(() => setQuizzes([])).finally(() => setLoading(false)); }, []);
+const { get, invalidate } =  useDataCache();
+
+useEffect(() => {
+  get<Quiz[]>("quizzes", "/quizzes")
+    .then((data) => setQuizzes(data))
+    .catch(() => setQuizzes([]))
+    .finally(() => setLoading(false));
+}, [get]);
 
   const startQuiz = (q: Quiz) => { setActiveQuiz(q); setCurrentQ(0); setSelectedAnswer(null); setConfirmed(false); setScore(0); setFinished(false); };
 
@@ -34,7 +42,7 @@ export default function QuizPage() {
       setFinished(true);
       api.post(`/quizzes/${activeQuiz.id}/attempt`, {
         answers: [], score: score + (selectedAnswer === activeQuiz.questions[currentQ].correct_index ? 1 : 0), total: activeQuiz.questions.length,
-      }).catch(() => {});
+      }).then(() => invalidate("overview")).catch(() => {});
     }
   };
 

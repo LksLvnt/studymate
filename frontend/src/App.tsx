@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { DataCacheProvider } from "./context/DataCacheContext";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import StudyGuidesPage from "./pages/StudyGuides";
@@ -43,7 +44,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ProtectedRoutes />
+        <DataCacheProvider>
+          <ProtectedRoutes />
+        </DataCacheProvider>
       </AuthProvider>
     </BrowserRouter>
   );

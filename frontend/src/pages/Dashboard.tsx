@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDataCache } from "../context/DataCacheContext";
 import { Link } from "react-router-dom";
 import { Upload, Layers, Brain, FileText, BookOpen, Loader2, Trash2, Target } from "lucide-react";
 import type { Document } from "../types";
@@ -29,23 +30,38 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    Promise.all([
-      api.get("/documents").catch(() => ({ data: [] })),
-      api.get("/analytics/overview").catch(() => ({ data: null })),
-    ]).then(([d, o]) => { setDocuments(d.data); setOverview(o.data); }).finally(() => setLoading(false));
-  }, []);
+const { get, invalidate } = useDataCache();
 
-  const generate = async (docId: string, type: "study-guide" | "flashcards" | "quiz") => {
-    setGenerating((p) => ({ ...p, [docId + type]: "loading" }));
-    try { await api.post(`/generate/${type}/${docId}`); setGenerating((p) => ({ ...p, [docId + type]: "done" })); }
-    catch { setGenerating((p) => ({ ...p, [docId + type]: "" })); }
-  };
+useEffect(() => {
+  Promise.all([
+    get<Document[]>("documents", "/documents").catch(() => []),
+    get<Overview>("overview", "/analytics/overview").catch(() => null),
+  ]).then(([d, o]) => { setDocuments(d); setOverview(o); }).finally(() => setLoading(false));
+}, [get]);
 
-  const deleteDoc = async (docId: string, filename: string) => {
-    if (!confirm(`Delete "${filename}" and all its study materials?`)) return;
-    try { await api.delete(`/documents/${docId}`); setDocuments((p) => p.filter((d) => d.id !== docId)); } catch {}
-  };
+const generate = async (docId: string, type: "study-guide" | "flashcards" | "quiz") => {
+  setGenerating((p) => ({ ...p, [docId + type]: "loading" }));
+  try {
+    await api.post(`/generate/${type}/${docId}`);
+    setGenerating((p) => ({ ...p, [docId + type]: "done" }));
+    invalidate("overview");
+    if (type === "flashcards") invalidate("flashcards");
+    if (type === "quiz") invalidate("quizzes");
+    if (type === "study-guide") invalidate("guides");
+  } catch {
+    setGenerating((p) => ({ ...p, [docId + type]: "" }));
+  }
+};
+
+const deleteDoc = async (docId: string, filename: string) => {
+  if (!confirm(`Delete "${filename}" and all its study materials?`)) return;
+  try {
+    await api.delete(`/documents/${docId}`);
+    setDocuments((p) => p.filter((d) => d.id !== docId));
+    invalidate("documents");
+    invalidate("overview");
+  } catch {}
+};
 
   const stats = [
     { label: "Documents", value: overview?.documents ?? documents.length, icon: FileText },

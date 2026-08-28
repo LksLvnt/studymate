@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Upload as UploadIcon, FileUp, CheckCircle, AlertCircle } from "lucide-react";
 import api from "../lib/api";
+import { useDataCache } from "../context/DataCacheContext";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 
@@ -17,17 +18,21 @@ export default function UploadPage() {
     if (dropped?.type === "application/pdf") { setFile(dropped); setStatus("idle"); }
   }, []);
 
-  const handleUpload = async () => {
-    if (!file) return;
-    setStatus("uploading"); setErrorMsg("");
-    const formData = new FormData();
-    formData.append("file", file);
-    if (subject.trim()) formData.append("subject", subject.trim());
-    try {
-      await api.post("/documents/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
-      setStatus("success"); setFile(null); setSubject("");
-    } catch { setStatus("error"); setErrorMsg("Upload failed."); }
-  };
+const { invalidate } = useDataCache();
+
+const handleUpload = async () => {
+  if (!file) return;
+  setStatus("uploading"); setErrorMsg("");
+  const formData = new FormData();
+  formData.append("file", file);
+  if (subject.trim()) formData.append("subject", subject.trim());
+  try {
+    await api.post("/documents/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
+    setStatus("success"); setFile(null); setSubject("");
+    invalidate("documents");
+    invalidate("overview");
+  } catch { setStatus("error"); setErrorMsg("Upload failed."); }
+};
 
   const input: React.CSSProperties = {
     width: "100%", background: "#1c1b1b", border: "1px solid rgba(255,255,255,0.08)",

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 import { BarChart3, FileText, Layers, Brain, Flame, TrendingUp, Target, Clock } from "lucide-react";
 import api from "../lib/api";
+import { useDataCache } from "../context/DataCacheContext";
 
 interface Overview { documents: number; flashcards: number; flashcards_due: number; flashcards_mastered: number; quizzes_taken: number; avg_accuracy: number | null; }
 interface QuizHistoryItem { date: string; accuracy: number; quiz_title: string; score: number; total: number; }
@@ -31,15 +32,17 @@ export default function Analytics() {
   const [streak, setStreak] = useState<Streak | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([
-      api.get("/analytics/overview").catch(() => ({ data: null })),
-      api.get("/analytics/quiz-history").catch(() => ({ data: [] })),
-      api.get("/analytics/topic-breakdown").catch(() => ({ data: [] })),
-      api.get("/analytics/study-streak").catch(() => ({ data: null })),
-    ]).then(([o, h, t, s]) => { setOverview(o.data); setQuizHistory(h.data); setTopics(t.data); setStreak(s.data); })
-      .finally(() => setLoading(false));
-  }, []);
+const { get } = useDataCache();
+
+useEffect(() => {
+  Promise.all([
+    get<Overview>("overview", "/analytics/overview").catch(() => null),
+    get<QuizHistoryItem[]>("quiz-history", "/analytics/quiz-history").catch(() => []),
+    get<TopicItem[]>("topic-breakdown", "/analytics/topic-breakdown").catch(() => []),
+    get<Streak>("study-streak", "/analytics/study-streak").catch(() => null),
+  ]).then(([o, h, t, s]) => { setOverview(o); setQuizHistory(h); setTopics(t); setStreak(s); })
+    .finally(() => setLoading(false));
+}, [get]);
 
   const heading = (
     <div style={{ marginBottom: 48 }}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Layers, ChevronLeft, ChevronRight } from "lucide-react";
 import api from "../lib/api";
+import { useDataCache } from "../context/DataCacheContext";
 
 interface Flashcard {
   id: string;
@@ -23,15 +24,24 @@ export default function Flashcards() {
   const [flipped, setFlipped] = useState(false);
   const [reviewed, setReviewed] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    api.get("/flashcards").then((r) => setCards(r.data)).catch(() => setCards([])).finally(() => setLoading(false));
-  }, []);
+const { get, invalidate} = useDataCache();
+
+useEffect(() => {
+  get<Flashcard[]>("flashcards", "/flashcards")
+    .then((data) => setCards(data))
+    .catch(() => setCards([]))
+    .finally(() => setLoading(false));
+}, [get]);
 
   const currentCard = cards[currentIndex];
 
   const handleReview = async (quality: number) => {
     if (!currentCard) return;
-    try { await api.post(`/flashcards/${currentCard.id}/review`, { quality }); setReviewed((p) => new Set(p).add(currentCard.id)); } catch {}
+    try {
+      await api.post(`/flashcards/${currentCard.id}/review`, { quality });
+      setReviewed((p) => new Set(p).add(currentCard.id));
+      invalidate("overview");
+    } catch {}
     setFlipped(false);
     if (currentIndex < cards.length - 1) setCurrentIndex(currentIndex + 1);
   };

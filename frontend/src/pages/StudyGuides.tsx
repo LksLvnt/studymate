@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BookOpen, ArrowLeft, FileText } from "lucide-react";
 import api from "../lib/api";
 import DOMPurify from "dompurify";
+import { useDataCache } from "../context/DataCacheContext";
 
 interface StudyGuideListItem { id: string; title: string; document_filename: string; subject: string | null; created_at: string; }
 interface StudyGuideFull extends StudyGuideListItem { content_markdown: string; }
@@ -33,7 +34,14 @@ export default function StudyGuidesPage() {
   const [loading, setLoading] = useState(true);
   const [loadingGuide, setLoadingGuide] = useState(false);
 
-  useEffect(() => { api.get("/study-guides").then((r) => setGuides(r.data)).catch(() => setGuides([])).finally(() => setLoading(false)); }, []);
+const { get } = useDataCache();
+
+useEffect(() => {
+  get<StudyGuideListItem[]>("guides", "/study-guides")
+    .then((data) => setGuides(data))
+    .catch(() => setGuides([]))
+    .finally(() => setLoading(false));
+}, [get]);
 
   const openGuide = async (id: string) => {
     setLoadingGuide(true);
